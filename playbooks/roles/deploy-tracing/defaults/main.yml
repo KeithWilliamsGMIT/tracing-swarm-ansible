@@ -1,0 +1,14 @@
+---
+# Directories
+temporary_directory: "/tmp"
+volume_directory: "/tmp"
+
+# Domain
+domain_name: example.local
+
+# Docker
+docker_network_name: "tracing_network"
+
+# Docker image versions
+jaeger_version: latest
+opentelemetry_collector_version: latest

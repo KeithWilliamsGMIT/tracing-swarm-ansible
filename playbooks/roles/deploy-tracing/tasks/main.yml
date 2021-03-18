@@ -1,0 +1,52 @@
+---
+- name: Install required python modules for Docker
+  pip:
+    name: "{{ item.name }}"
+    state: present
+  with_items:
+  - { name: jsondiff }
+
+- name: Install required python modules for Docker (with specific versions)
+  pip:
+    name: "{{ item.name }}"
+    version: "{{ item.version }}"
+    state: present
+  with_items:
+  - { name: docker-py, version: 1.10.6 }
+
+- name: Create an overlay network
+  docker_network:
+    name: '{{ docker_network_name }}'
+    driver: overlay
+    state: present
+
+- name: Remove tracing stack
+  docker_stack:
+    name: tracing
+    state: absent
+
+- name: Create configuration directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    recurse: yes
+  with_items:
+    - '{{ volume_directory }}/tracing/collector'
+
+- name: Write out collector configuration template
+  template:
+    src: collector/collector-config.yaml.j2
+    dest: '{{ volume_directory }}/tracing/collector/collector-config.yaml'
+
+- name: Write out docker-compose-tracing.yml template
+  template:
+    src: docker-compose-tracing.yml.j2
+    dest: '{{ temporary_directory }}/docker-compose-tracing.yml'
+
+- name: Deploy tracing stack swarm
+  docker_stack:
+    state: present
+    name: tracing
+    compose:
+      - "{{ temporary_directory }}/docker-compose-tracing.yml"
+    with_registry_auth: yes
